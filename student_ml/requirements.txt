@@ -3,3 +3,6 @@ Django
 pandas
 scikit-learn
 joblib
+tensorflow
+
+
