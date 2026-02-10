@@ -240,6 +240,153 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .time-warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .time-warning.show {
+            display: block;
+        }
+
+        .time-warning p {
+            color: #92400e;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .risk-badge.critical {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .risk-badge.high {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .risk-badge.medium {
+            background: #fef08a;
+            color: #ca8a04;
+        }
+
+        .risk-badge.low {
+            background: #bbf7d0;
+            color: #16a34a;
+        }
+
+        .warnings-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: left;
+            display: none;
+        }
+
+        .warnings-box.show {
+            display: block;
+        }
+
+        .warnings-box h4 {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .warnings-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #b91c1c;
+            font-size: 0.8rem;
+        }
+
+        .warnings-box li {
+            margin-bottom: 6px;
+        }
+
+        .recommendations-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            text-align: left;
+            display: none;
+        }
+
+        .recommendations-box.show {
+            display: block;
+        }
+
+        .recommendations-box h4 {
+            color: #1d4ed8;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .recommendations-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #1e40af;
+            font-size: 0.8rem;
+        }
+
+        .recommendations-box li {
+            margin-bottom: 6px;
+        }
+
+        .input-warnings-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            text-align: left;
+            display: none;
+        }
+
+        .input-warnings-box.show {
+            display: block;
+        }
+
+        .input-warnings-box h4 {
+            color: #b45309;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .input-warnings-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #92400e;
+            font-size: 0.8rem;
+        }
+
+        .input-warnings-box li {
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -249,6 +396,10 @@
         </div>
         
         <div class="form-container">
+            <div class="time-warning" id="timeWarning">
+                <p>⚠️ <strong>Warning:</strong> Study hours + Sleep hours exceed 24 hours per day. This is impossible.</p>
+            </div>
+
             <form id="predictionForm">
                 <div class="form-group">
                     <label for="hours_studied">Hours Studied (per day)</label>
@@ -302,10 +453,26 @@
                 <h3>Predicted Performance Index</h3>
                 <div class="score" id="scoreValue">--</div>
                 <div class="grade" id="gradeValue">Grade: --</div>
+                <div class="risk-badge" id="riskBadge">Risk: --</div>
                 <div class="student-type">
                     <div class="label">Student Classification</div>
                     <div class="type" id="studentType">--</div>
                     <div class="description" id="studentDescription">--</div>
+                </div>
+                
+                <div class="warnings-box" id="warningsBox">
+                    <h4>⚠️ Warnings</h4>
+                    <ul id="warningsList"></ul>
+                </div>
+                
+                <div class="recommendations-box" id="recommendationsBox">
+                    <h4>💡 Recommendations</h4>
+                    <ul id="recommendationsList"></ul>
+                </div>
+                
+                <div class="input-warnings-box" id="inputWarningsBox">
+                    <h4>⚠️ Input Concerns</h4>
+                    <ul id="inputWarningsList"></ul>
                 </div>
             </div>
         </div>
@@ -372,8 +539,32 @@
                 showFieldError('sample_papers', 'Must be 0-20');
             }
             
+            // Check if study + sleep hours exceed 24
+            const totalHours = data.hours_studied + data.sleep_hours;
+            if (totalHours > 24) {
+                errors.push(`Study hours (${data.hours_studied}) + Sleep hours (${data.sleep_hours}) = ${totalHours} hours exceeds 24 hours per day`);
+                showFieldError('hours_studied', 'Total exceeds 24h');
+                showFieldError('sleep_hours', 'Total exceeds 24h');
+            }
+            
             return errors;
         }
+
+        function updateTimeWarning() {
+            const hoursStudied = parseInt(document.getElementById('hours_studied').value) || 0;
+            const sleepHours = parseInt(document.getElementById('sleep_hours').value) || 0;
+            const timeWarning = document.getElementById('timeWarning');
+            
+            if (hoursStudied + sleepHours > 24) {
+                timeWarning.classList.add('show');
+            } else {
+                timeWarning.classList.remove('show');
+            }
+        }
+
+        // Add event listeners for real-time time validation
+        document.getElementById('hours_studied').addEventListener('input', updateTimeWarning);
+        document.getElementById('sleep_hours').addEventListener('input', updateTimeWarning);
 
         document.getElementById('predictionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -419,8 +610,65 @@
                     const score = result.predicted_performance_index;
                     document.getElementById('scoreValue').textContent = score.toFixed(1);
                     document.getElementById('gradeValue').textContent = 'Grade: ' + getGrade(score);
-                    document.getElementById('studentType').textContent = result.student_type;
-                    document.getElementById('studentDescription').textContent = result.student_description;
+                    
+                    // Display student classification (correct field names from API)
+                    document.getElementById('studentType').textContent = result.student_classification || '--';
+                    document.getElementById('studentDescription').textContent = result.description || '--';
+                    
+                    // Display risk level badge
+                    const riskBadge = document.getElementById('riskBadge');
+                    const riskLevel = result.risk_level || 'Low';
+                    riskBadge.textContent = 'Risk: ' + riskLevel;
+                    riskBadge.className = 'risk-badge ' + riskLevel.toLowerCase();
+                    
+                    // Display warnings from analysis
+                    const warningsBox = document.getElementById('warningsBox');
+                    const warningsList = document.getElementById('warningsList');
+                    warningsList.innerHTML = '';
+                    const warnings = result.analysis?.warnings || [];
+                    if (warnings.length > 0) {
+                        warnings.forEach(w => {
+                            const li = document.createElement('li');
+                            li.textContent = w;
+                            warningsList.appendChild(li);
+                        });
+                        warningsBox.classList.add('show');
+                    } else {
+                        warningsBox.classList.remove('show');
+                    }
+                    
+                    // Display recommendations from analysis
+                    const recommendationsBox = document.getElementById('recommendationsBox');
+                    const recommendationsList = document.getElementById('recommendationsList');
+                    recommendationsList.innerHTML = '';
+                    const recommendations = result.analysis?.recommendations || [];
+                    if (recommendations.length > 0) {
+                        recommendations.forEach(r => {
+                            const li = document.createElement('li');
+                            li.textContent = r;
+                            recommendationsList.appendChild(li);
+                        });
+                        recommendationsBox.classList.add('show');
+                    } else {
+                        recommendationsBox.classList.remove('show');
+                    }
+                    
+                    // Display input warnings
+                    const inputWarningsBox = document.getElementById('inputWarningsBox');
+                    const inputWarningsList = document.getElementById('inputWarningsList');
+                    inputWarningsList.innerHTML = '';
+                    const inputWarnings = result.input_warnings || [];
+                    if (inputWarnings.length > 0) {
+                        inputWarnings.forEach(w => {
+                            const li = document.createElement('li');
+                            li.textContent = w;
+                            inputWarningsList.appendChild(li);
+                        });
+                        inputWarningsBox.classList.add('show');
+                    } else {
+                        inputWarningsBox.classList.remove('show');
+                    }
+                    
                     resultBox.classList.add('show');
                 } else {
                     const errors = [];
